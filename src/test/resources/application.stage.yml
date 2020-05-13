@@ -1,0 +1,5 @@
+# Stage environment settings.
+api:
+  baseUrl: "https://search-test-automation.jivelandia.com/"
+restAssuredSettings:
+  debugMode: "true"

@@ -1,0 +1,7 @@
+# The default environment settings.
+# To support test execution on multi environment, Create a new file with name = application.{environment name}.yml
+# example: application.stage.yml for "stage" environment
+api:
+  baseUrl: "https://search-test-automation.jivelandia.com/"
+restAssuredSettings:
+  debugMode: "true"

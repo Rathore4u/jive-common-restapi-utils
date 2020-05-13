@@ -1,0 +1,71 @@
+pipeline {
+    agent {
+            label 'jdk8'
+        }
+
+    parameters {
+        gitParameter(
+             defaultValue: params.DEFAULT_GIT_BRANCH, branchFilter: 'origin/(.*)',
+             description: 'What is the name of the branch that you want to build? e.g. - develop',
+             name: 'GIT_BRANCH',
+             quickFilterEnabled: true,
+             selectedValue: 'DEFAULT',
+             sortMode: 'NONE',
+             tagFilter: '*',
+             type: 'PT_BRANCH')
+
+        booleanParam(
+            name: 'M2_PUBLISH',  
+            defaultValue: params.M2_PUBLISH ?: true, 
+            description: 'Check if you want to publish artifact to maven, Uncheck if you dont want to')
+
+        string(
+            name: 'DEFAULT_GIT_BRANCH', 
+            defaultValue: params.DEFAULT_GIT_BRANCH ?:  'develop', 
+            description: 'Default test branch for scheduled executions');
+
+    }
+
+    tools {
+        maven 'maven-3.1.1'
+        jdk 'default_jdk'
+    }
+
+    environment {
+        NEXUS_CRED = credentials('central.jnk.nexus')
+        GIT_BRANCH = "${params.GIT_BRANCH}"
+    }
+
+    stages {
+        stage ('Initialize') {
+            steps {
+                sh '''
+                    echo "PATH = ${PATH}"
+                    echo "M2_HOME = ${M2_HOME}"
+                    echo "NEXUS = ${NEXUS_CRED}"
+                '''
+            }
+        }
+
+        stage ('Build') {
+            steps {
+                withMaven(
+                    mavenSettingsFilePath: 'jenkins/settings.xml'
+                ) {
+                    sh 'mvn  -DskipTests=true -Dmaven.test.skip=true clean package'
+                }
+            }
+        }
+
+        stage ('Publish') {
+             when { expression { return params.M2_PUBLISH } }
+            steps {
+                withMaven(
+                    mavenSettingsFilePath: 'jenkins/settings.xml'
+                ) {
+                    sh 'mvn  -DskipTests=true -Dmaven.test.skip=true clean package deploy'
+                }
+            }
+        }
+    }
+}
